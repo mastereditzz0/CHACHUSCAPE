@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* hide the Next.js dev-tools badge completely */
+  output: "export",
+  basePath: "/CHACHUSCAPE",
+  images: {
+    unoptimized: true,
+  },
   devIndicators: false,
 };
 
