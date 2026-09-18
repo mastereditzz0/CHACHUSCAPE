@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #ededed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-jakarta);
+  --font-mono: var(--font-jetbrains);
+}
+
+/* ── Type system ─────────────────────────────────────────────────
+   Display headlines (CHACHUSCAPE, DREAMING, big section h2s): Geist —
+   untouched, pinned in base so nothing else cascades into it.
+   Body / UI (nav, buttons, paragraphs, forms, panel headers):
+   Plus Jakarta Sans. HUD micro-labels / meta / tags: JetBrains Mono. */
+
+@layer base {
+  /* HUD label / meta / tag role — all-caps tracked text */
+  .micro-label {
+    font-family: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-jakarta), "Plus Jakarta Sans", var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  }
+
+  /* display headline role — Geist, exactly as before.
+     Large hero/section headlines only; smaller panel/card headings
+     explicitly opt into Jakarta with [font-family:var(--font-jakarta)]. */
+  .display-font,
+  h1, h2, h3 {
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  }
+}
+
+/* ── Infinite logo marquee ─────────────────────────────────────── */
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee-scroll linear infinite;
+  will-change: transform;
+}
+
+/* pause when the section is off-screen (set via data attribute) */
+section[data-paused] .marquee-track {
+  animation-play-state: paused;
+}
+
+/* staggered spacing — alternates per logo; the pattern sums to zero
+   across each half of the track so the infinite loop stays seamless */
+.marquee-track > div:nth-child(odd) {
+  margin-left: 0.25rem;
+}
+.marquee-track > div:nth-child(even) {
+  margin-left: -0.25rem;
+}
+
+/* soft edge fade so logos dissolve at the viewport edges */
+.marquee-mask {
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* ── Dream Studio: cinematic generating scene ───────────────────── */
+
+/* full-bleed looping video behind the status text */
+.dream-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* radial vignette so the serif word reads over the bright orb */
+.dream-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(10, 5, 20, 0.45) 0%,
+    rgba(10, 5, 20, 0.65) 55%,
+    rgba(10, 5, 20, 0.85) 100%
+  );
+}
+
+/* the big serif word — lit by the orb, not pasted on.
+   Fraunces is self-hosted via next/font (root layout). */
+.dream-word {
+  font-family: var(--font-fraunces), "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: #f5f0fa;
+  text-shadow: 0 0 24px rgba(200, 160, 255, 0.35);
+  transition: opacity 400ms ease;
+}
+
+/* meta line + corner tag share the site's label system */
+.dream-meta {
+  font-family: var(--font-jetbrains), "JetBrains Mono", monospace;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dream-progress {
+  opacity: 0.7;
+  transition: opacity 400ms ease;
+}
+
+/* ── Dream Studio: generation shimmer + artwork reveal ─────────── */
+
+/* diagonal light band sweeping the canvas while a dream renders */
+@keyframes dream-shimmer-sweep {
+  0% {
+    transform: translateY(-140%) skewY(-8deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(240%) skewY(-8deg);
+    opacity: 0;
+  }
+}
+
+.dream-shimmer {
+  top: -10rem;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.06) 30%,
+    rgba(217, 70, 239, 0.1) 50%,
+    rgba(139, 92, 246, 0.06) 70%,
+    transparent 100%
+  );
+  animation: dream-shimmer-sweep 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+/* generated artwork fades and unblurs into place */
+@keyframes dream-reveal {
+  from {
+    opacity: 0;
+    transform: scale(1.035);
+    filter: blur(14px) saturate(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) saturate(1);
+  }
+}
+
+.dream-reveal {
+  animation: dream-reveal 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Create Without Limits: ambient world motion ─────────────── */
+
+/* slow-breathing atmospheric haze */
+@keyframes worlds-haze {
+  0%,
+  100% {
+    transform: translate3d(-1.5%, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.5%, -1.2%, 0) scale(1.04);
+  }
+}
+.worlds-haze {
+  animation: worlds-haze 22s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* volumetric light rays, gently swaying */
+@keyframes worlds-rays {
+  0%,
+  100% {
+    transform: rotate(14deg) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: rotate(17deg) scale(1.03);
+    opacity: 1;
+  }
+}
+.worlds-ray {
+  transform-origin: 0 0;
+  animation: worlds-rays 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* petals — wrapper falls, inner span sways so the path is organic */
+@keyframes worlds-petal-fall {
+  0% {
+    transform: translateY(-6vh);
+  }
+  100% {
+    transform: translateY(106vh);
+  }
+}
+.worlds-petal {
+  animation: worlds-petal-fall linear infinite;
+  will-change: transform;
+}
+.worlds-petal > span {
+  animation: worlds-petal-sway ease-in-out infinite;
+}
+@keyframes worlds-petal-sway {
+  0%,
+  100% {
+    transform: translateX(-16px) rotate(-22deg);
+  }
+  50% {
+    transform: translateX(16px) rotate(22deg);
+  }
+}
+
+/* caption line rises softly when the active world changes */
+@keyframes worlds-caption-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+.worlds-caption-in {
+  animation: worlds-caption-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .worlds-haze,
+  .worlds-ray,
+  .worlds-petal,
+  .worlds-petal > span,
+  .worlds-caption-in {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dream-shimmer,
+  .dream-reveal {
+    animation: none;
+  }
+}

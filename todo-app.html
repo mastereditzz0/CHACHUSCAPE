@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DreamList — Powered by Puter</title>
+<style>
+  :root {
+    --bg: #060310;
+    --panel: rgba(13, 8, 30, 0.42);
+    --panel-border: rgba(255, 255, 255, 0.12);
+    --text: #ece9f6;
+    --dim: #beb7dd;
+    --faint: #8d85b5;
+    --lav: #c4b5fd;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .aura { position: fixed; border-radius: 50%; pointer-events: none; filter: blur(90px); z-index: 0; }
+  .aura-1 { width: 560px; height: 560px; top: -220px; left: -160px; background: rgba(139, 92, 246, 0.13); animation: breathe 11s ease-in-out infinite; }
+  .aura-2 { width: 480px; height: 480px; bottom: -200px; right: -140px; background: rgba(236, 72, 153, 0.09); animation: breathe 14s ease-in-out infinite 2s; }
+  @keyframes breathe { 0%, 100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
+
+  /* dream-door artwork backdrop under a cinematic veil */
+  .bg-img { position: fixed; inset: 0; z-index: 0; background: url("/art/todo-bg.jpg") center / cover no-repeat; }
+  .bg-veil {
+    position: fixed; inset: 0; z-index: 0;
+    background-image: linear-gradient(180deg, rgba(10, 6, 24, 0.52), rgba(10, 6, 24, 0.3) 45%, rgba(10, 6, 24, 0.62));
+    background-color: rgba(10, 6, 24, 0.16);
+  }
+  /* dark glass so panels read over the flower field */
+  .stat, .composer, .item, .user-chip, .btn, .toast { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+
+  .wrap { width: 100%; max-width: 640px; padding: 48px 20px 40px; position: relative; z-index: 1; }
+
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
+    background: linear-gradient(135deg, rgba(139,92,246,0.35), rgba(236,72,153,0.2));
+    border: 1px solid rgba(196,181,253,0.3);
+    box-shadow: 0 0 24px rgba(139,92,246,0.25);
+    font-size: 17px;
+  }
+  .brand-text .name { font-size: 17px; font-weight: 600; letter-spacing: 0.04em; }
+  .brand-text .sub { font-size: 10px; color: var(--faint); letter-spacing: 0.22em; text-transform: uppercase; margin-top: 2px; }
+  .auth-zone { display: flex; align-items: center; gap: 10px; }
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 999px; padding: 6px 14px 6px 7px; font-size: 12.5px; color: var(--dim);
+  }
+  .user-chip .avatar {
+    width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; font-size: 11px; font-weight: 700;
+  }
+  .user-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.5); }
+  .user-chip.guest .dot { background: var(--faint); box-shadow: none; }
+
+  .btn {
+    font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+    border-radius: 999px; padding: 9px 18px; border: 1px solid var(--panel-border);
+    background: var(--panel); color: var(--text); transition: all 0.25s ease;
+  }
+  .btn:hover { border-color: rgba(196,181,253,0.4); background: rgba(255,255,255,0.07); }
+  .btn-cta {
+    border: none; color: #fff; font-weight: 600; letter-spacing: 0.06em;
+    background: linear-gradient(90deg, #f97316, #ec4899, #8b5cf6);
+    box-shadow: 0 4px 24px rgba(236,72,153,0.35);
+  }
+  .btn-cta:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
+  .stats { display: flex; gap: 10px; margin-bottom: 22px; }
+  .stat { flex: 1; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 16px; padding: 13px 16px; }
+  .stat .num { font-size: 20px; font-weight: 600; background: linear-gradient(90deg, #fff, #d9cdf7); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .stat .lbl { font-size: 9.5px; color: var(--faint); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 3px; }
+
+  .composer {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 20px;
+    padding: 8px; margin-bottom: 26px; transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .composer:focus-within { border-color: rgba(196,181,253,0.45); box-shadow: 0 0 32px rgba(139,92,246,0.14); }
+  .composer-row { display: flex; gap: 8px; }
+  .composer input {
+    flex: 1; background: transparent; border: none; outline: none; color: var(--text);
+    font-family: inherit; font-size: 14.5px; padding: 10px 12px; min-width: 0;
+  }
+  .composer input::placeholder { color: var(--faint); }
+  .composer .add-btn {
+    border: none; cursor: pointer; border-radius: 14px; padding: 0 20px; white-space: nowrap;
+    background: linear-gradient(90deg, #f97316, #ec4899, #8b5cf6);
+    color: #fff; font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
+    transition: filter 0.25s ease, transform 0.2s ease;
+  }
+  .composer .add-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+  .composer .add-btn:active { transform: translateY(0); }
+
+  .filters { display: flex; gap: 6px; margin-bottom: 18px; align-items: center; }
+  .filter-btn {
+    font-family: inherit; font-size: 12px; cursor: pointer; border-radius: 999px; padding: 6px 14px;
+    border: 1px solid transparent; background: transparent; color: var(--dim); transition: all 0.25s ease;
+  }
+  .filter-btn:hover { color: var(--text); }
+  .filter-btn.active { background: rgba(255,255,255,0.08); border-color: rgba(196,181,253,0.35); color: #fff; box-shadow: 0 0 16px rgba(139,92,246,0.15); }
+  .filters .spacer { flex: 1; }
+  .clear-btn { font-size: 11.5px; color: var(--faint); cursor: pointer; background: none; border: none; font-family: inherit; transition: color 0.2s; }
+  .clear-btn:hover { color: #f87171; }
+
+  .list { display: flex; flex-direction: column; gap: 9px; }
+  .item {
+    display: flex; align-items: center; gap: 13px;
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 16px;
+    padding: 13px 16px; transition: all 0.25s ease; animation: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .item:hover { border-color: rgba(196,181,253,0.3); background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .checkbox {
+    width: 21px; height: 21px; min-width: 21px; border-radius: 7px; cursor: pointer;
+    border: 1.5px solid rgba(196,181,253,0.4); display: grid; place-items: center; transition: all 0.2s ease;
+  }
+  .checkbox:hover { border-color: var(--lav); box-shadow: 0 0 10px rgba(196,181,253,0.3); }
+  .item.done .checkbox { background: linear-gradient(135deg, #8b5cf6, #ec4899); border-color: transparent; }
+  .item.done .checkbox svg { display: block; }
+  .checkbox svg { display: none; }
+  .item-text { flex: 1; font-size: 14.5px; line-height: 1.45; transition: all 0.25s ease; word-break: break-word; }
+  .item.done .item-text { color: rgba(236, 233, 246, 0.5); text-decoration: line-through; text-decoration-color: rgba(196,181,253,0.6); }
+  .item-time { font-size: 10px; color: var(--faint); letter-spacing: 0.08em; white-space: nowrap; }
+  .del-btn {
+    background: none; border: none; cursor: pointer; color: var(--faint); padding: 4px; border-radius: 8px;
+    display: grid; place-items: center; opacity: 0; transition: all 0.2s ease;
+  }
+  .item:hover .del-btn { opacity: 1; }
+  .del-btn:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+
+  .empty { text-align: center; padding: 52px 20px; color: rgba(236, 233, 246, 0.65); font-size: 13.5px; line-height: 1.7; text-shadow: 0 1px 12px rgba(10, 6, 24, 0.8); }
+  .empty .star { font-size: 26px; margin-bottom: 10px; display: block; filter: drop-shadow(0 0 14px rgba(196,181,253,0.5)); }
+
+  .toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: rgba(20,16,40,0.92); border: 1px solid rgba(196,181,253,0.3);
+    backdrop-filter: blur(12px); border-radius: 999px; padding: 10px 22px;
+    font-size: 12.5px; color: var(--text); opacity: 0; transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+    z-index: 50; box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 24px rgba(139,92,246,0.15);
+    pointer-events: none; white-space: nowrap; max-width: 92vw;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: rgba(248,113,113,0.4); }
+
+  footer { margin-top: 40px; text-align: center; font-size: 11px; color: var(--faint); }
+  footer a { color: var(--lav); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  .gate { text-align: center; padding: 64px 24px; }
+  .gate .star { font-size: 40px; display: block; margin-bottom: 18px; filter: drop-shadow(0 0 24px rgba(139,92,246,0.6)); }
+  .gate h1 {
+    font-size: clamp(28px, 6vw, 40px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1;
+    background: linear-gradient(90deg, #fff, #d9cdf7, #f0abfc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 14px;
+  }
+  .gate p { color: rgba(236, 233, 246, 0.78); font-size: 14px; max-width: 400px; margin: 0 auto 30px; line-height: 1.7; text-shadow: 0 1px 12px rgba(10, 6, 24, 0.8); }
+  .gate-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .gate-note { margin-top: 22px; font-size: 11.5px; color: var(--faint); max-width: 380px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 480px) {
+    .wrap { padding-top: 28px; }
+    .stats { flex-wrap: wrap; }
+    .stat { min-width: 45%; }
+    .brand-text .sub { display: none; }
+    .item-time { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg-img"></div>
+  <div class="bg-veil"></div>
+  <div class="aura aura-1"></div>
+  <div class="aura aura-2"></div>
+
+  <div class="wrap">
+    <div id="gate" class="gate">
+      <span class="star">✦</span>
+      <h1>DreamList</h1>
+      <p>Your tasks, synced to your Puter account — private by default, serverless, no backend. Sign in to keep your list in the cloud, or start instantly as a guest.</p>
+      <div class="gate-actions">
+        <button id="btn-signin" class="btn btn-cta">Sign in with Puter</button>
+        <button id="btn-guest" class="btn">Continue as guest</button>
+      </div>
+      <p class="gate-note" id="gate-note">This DreamList is private — Puter access is limited to samridhsuresh@gmail.com. Guest mode keeps a list on this device only.</p>
+    </div>
+
+    <div id="app" class="hidden">
+      <header>
+        <div class="brand">
+          <div class="brand-mark">✦</div>
+          <div class="brand-text">
+            <div class="name">DreamList</div>
+            <div class="sub">POWERED BY PUTER</div>
+          </div>
+        </div>
+        <div class="auth-zone">
+          <div class="user-chip" id="user-chip">
+            <span class="avatar" id="user-avatar">?</span>
+            <span id="user-name">…</span>
+            <span class="dot"></span>
+          </div>
+          <button id="btn-signout" class="btn" title="Sign out">⎋</button>
+        </div>
+      </header>
+
+      <div class="stats">
+        <div class="stat"><div class="num" id="stat-total">0</div><div class="lbl">Total</div></div>
+        <div class="stat"><div class="num" id="stat-active">0</div><div class="lbl">Active</div></div>
+        <div class="stat"><div class="num" id="stat-done">0</div><div class="lbl">Done</div></div>
+      </div>
+
+      <div class="composer">
+        <div class="composer-row">
+          <input id="new-todo" type="text" placeholder="Describe your next dream task… (Enter to add)" autocomplete="off" maxlength="500">
+          <button id="btn-add" class="add-btn">ADD ✦</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="active">Active</button>
+        <button class="filter-btn" data-filter="done">Done</button>
+        <span class="spacer"></span>
+        <button id="btn-clear-done" class="clear-btn">Clear completed</button>
+      </div>
+
+      <div class="list" id="list"></div>
+      <div class="empty" id="empty">
+        <span class="star">✦</span>
+        Nothing here yet.<br>Add your first task above — it syncs to the cloud.
+      </div>
+    </div>
+
+    <footer>
+      Powered by <a href="https://developer.puter.com" target="_blank" rel="noopener">Puter.js</a> — serverless cloud + auth, no backend.
+    </footer>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+<script src="https://js.puter.com/v2/"></script>
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "dreamlist-todos";
+  var GUEST_KEY = "dreamlist-guest-todos";
+  var ALLOWED_EMAIL = "samridhsuresh@gmail.com";   // the only Puter account with access
+  var todos = {};          // id -> {text, done, at}
+  var mode = "guest";      // "cloud" | "guest"
+  var filter = "all";
+  var puterReady = typeof puter !== "undefined";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var els = {};
+
+  /* ---------- storage backends ---------- */
+
+  function loadGuest() {
+    try { return JSON.parse(localStorage.getItem(GUEST_KEY) || "{}"); }
+    catch (e) { return {}; }
+  }
+  function saveGuest() {
+    try { localStorage.setItem(GUEST_KEY, JSON.stringify(todos)); } catch (e) {}
+  }
+  function saveCloud() {
+    return puter.kv.set(KEY, JSON.stringify(todos));
+  }
+
+  /* ---------- UI helpers ---------- */
+
+  function toast(msg, isError) {
+    if (!els.toast) return;
+    els.toast.textContent = msg;
+    els.toast.className = "toast show" + (isError ? " error" : "");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { els.toast.className = "toast" + (isError ? " error" : ""); }, 2600);
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function fmtTime(ts) {
+    var d = new Date(ts);
+    var today = new Date();
+    var sameDay = d.toDateString() === today.toDateString();
+    var hm = d.getHours().toString().padStart(2, "0") + ":" + d.getMinutes().toString().padStart(2, "0");
+    return sameDay ? hm : (d.getMonth() + 1) + "/" + d.getDate() + " " + hm;
+  }
+
+  function items() {
+    return Object.keys(todos)
+      .map(function (id) { var t = todos[id]; return { id: id, text: t.text, done: !!t.done, at: t.at || 0 }; })
+      .sort(function (a, b) { return (a.done - b.done) || (b.at - a.at); });
+  }
+
+  /* ---------- render ---------- */
+
+  function render() {
+    var all = items();
+    var shown = all.filter(function (t) {
+      if (filter === "active") return !t.done;
+      if (filter === "done") return t.done;
+      return true;
+    });
+
+    var list = els.list;
+    list.innerHTML = shown.map(function (t) {
+      return '<div class="item' + (t.done ? " done" : "") + '" data-id="' + esc(t.id) + '">'
+        + '<span class="checkbox" data-act="toggle" role="checkbox" aria-checked="' + t.done + '" tabindex="0">'
+        + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6.5" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        + "</span>"
+        + '<span class="item-text">' + esc(t.text) + "</span>"
+        + '<span class="item-time">' + fmtTime(t.at) + "</span>"
+        + '<button class="del-btn" data-act="del" title="Delete" aria-label="Delete task">'
+        + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+        + "</button></div>";
+    }).join("");
+
+    els.empty.className = "empty" + (shown.length ? " hidden" : "");
+    if (!all.length && shown.length === 0) {
+      els.empty.innerHTML = '<span class="star">✦</span>Nothing here yet.<br>Add your first task above — it ' + (mode === "cloud" ? "syncs to the cloud." : "stays on this device.");
+    }
+
+    var done = all.filter(function (t) { return t.done; }).length;
+    els.statTotal.textContent = all.length;
+    els.statActive.textContent = all.length - done;
+    els.statDone.textContent = done;
+    els.clearDone.style.visibility = done ? "visible" : "hidden";
+  }
+
+  /* ---------- actions ---------- */
+
+  function addTodo(text) {
+    text = (text || "").trim();
+    if (!text) return;
+    var id = (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(36).slice(2));
+    todos[id] = { text: text.slice(0, 500), done: false, at: Date.now() };
+    persist().then(function () { render(); });
+    els.input.value = "";
+    if (filter === "done") setFilter("all");
+  }
+
+  function toggleTodo(id) {
+    if (!todos[id]) return;
+    todos[id].done = !todos[id].done;
+    todos[id].doneAt = todos[id].done ? Date.now() : undefined;
+    persist().then(render);
+  }
+
+  function deleteTodo(id) {
+    if (!todos[id]) return;
+    delete todos[id];
+    persist().then(render);
+  }
+
+  function clearDone() {
+    var removed = 0;
+    Object.keys(todos).forEach(function (id) { if (todos[id].done) { delete todos[id]; removed++; } });
+    if (removed) { persist().then(render); toast("Cleared " + removed + " completed task" + (removed > 1 ? "s" : "")); }
+  }
+
+  function persist() {
+    if (mode === "cloud" && puterReady) {
+      return saveCloud().catch(function (e) {
+        toast("Cloud sync failed — saved locally for now", true);
+        saveGuest();
+        return Promise.resolve();
+      });
+    }
+    saveGuest();
+    return Promise.resolve();
+  }
+
+  function setFilter(f) {
+    filter = f;
+    document.querySelectorAll(".filter-btn").forEach(function (b) {
+      b.className = "filter-btn" + (b.getAttribute("data-filter") === f ? " active" : "");
+    });
+    render();
+  }
+
+  /* ---------- auth / boot ---------- */
+
+  function isAllowed(u) {
+    if (!u) return false;
+    var email = (u.email || "").toLowerCase();
+    var uname = (u.username || "").toLowerCase();
+    var local = ALLOWED_EMAIL.split("@")[0];
+    // tolerate the common Puter username shapes derived from the email
+    return email === ALLOWED_EMAIL || uname === ALLOWED_EMAIL || uname === local || uname === local + "-gmail-com";
+  }
+
+  function showDenied(user) {
+    els.gate.className = "gate";
+    els.app.className = "hidden";
+    var who = (user && (user.email || user.username)) || "that account";
+    els.gateNote.textContent = "Access restricted — this DreamList belongs to " + ALLOWED_EMAIL + ". You are signed in as " + who + ", which does not have access. Sign in with the owner account instead.";
+    els.gateNote.style.color = "#f0a5b8";
+  }
+
+  function resetGateNote() {
+    els.gateNote.textContent = "This DreamList is private — Puter access is limited to " + ALLOWED_EMAIL + ". Guest mode keeps a list on this device only.";
+    els.gateNote.style.color = "";
+  }
+
+  function enterApp(isCloud, user) {
+    mode = isCloud ? "cloud" : "guest";
+    els.gate.className = "gate hidden";
+    els.app.className = "";
+    if (isCloud && user) {
+      var name = user.username || "you";
+      els.userName.textContent = name;
+      els.userAvatar.textContent = name.charAt(0).toUpperCase();
+      els.userChip.className = "user-chip";
+    } else {
+      els.userName.textContent = "Guest";
+      els.userAvatar.textContent = "G";
+      els.userChip.className = "user-chip guest";
+    }
+    render();
+  }
+
+  function showGate() {
+    els.gate.className = "gate";
+    els.app.className = "hidden";
+  }
+
+  async function boot() {
+    if (!puterReady) {
+      els.gateNote.textContent = "Puter.js failed to load — check your connection and refresh.";
+      return;
+    }
+    resetGateNote();
+    try {
+      if (puter.auth.isSignedIn()) {
+        var user = await puter.auth.getUser();
+        // single-account lockout: sign out anyone else
+        if (!isAllowed(user)) {
+          try { await puter.auth.signOut(); } catch (e) {}
+          showDenied(user);
+          return;
+        }
+        var raw = await puter.kv.get(KEY);
+        var cloud = raw ? JSON.parse(raw) : {};
+        var guest = loadGuest();
+        // merge guest items into cloud on first sign-in (cloud wins on id conflict)
+        var merged = Object.assign({}, guest, cloud);
+        var changed = Object.keys(guest).some(function (k) { return !cloud[k]; });
+        todos = merged;
+        if (changed) await saveCloud();
+        localStorage.removeItem(GUEST_KEY);
+        enterApp(true, user);
+        if (changed) toast("Moved your guest tasks to the cloud ✦");
+        return;
+      }
+    } catch (e) { /* fall through to gate */ }
+    showGate();
+  }
+
+  async function signIn() {
+    if (!puterReady) return toast("Puter.js not loaded", true);
+    try {
+      await puter.auth.signIn();
+      await boot(); // boot() enforces the single-account lockout
+    } catch (e) {
+      if (e && e.error) toast("Sign-in cancelled", true);
+    }
+  }
+
+  async function signOut() {
+    try { await puter.auth.signOut(); } catch (e) {}
+    todos = {};
+    mode = "guest";
+    showGate();
+    toast("Signed out");
+  }
+
+  async function migrateGuestToCloud() {
+    // called when a guest clicks sign-in from inside the app (not used on gate)
+  }
+
+  /* ---------- wire up ---------- */
+
+  function init() {
+    els = {
+      gate: $("gate"), app: $("app"), list: $("list"), empty: $("empty"),
+      input: $("new-todo"), toast: $("toast"),
+      statTotal: $("stat-total"), statActive: $("stat-active"), statDone: $("stat-done"),
+      clearDone: $("btn-clear-done"), gateNote: $("gate-note"),
+      userName: $("user-name"), userAvatar: $("user-avatar"), userChip: $("user-chip"),
+    };
+
+    $("btn-signin").addEventListener("click", signIn);
+    $("btn-guest").addEventListener("click", function () { enterApp(false, null); });
+    $("btn-signout").addEventListener("click", signOut);
+    $("btn-add").addEventListener("click", function () { addTodo(els.input.value); });
+    els.input.addEventListener("keydown", function (e) { if (e.key === "Enter") addTodo(els.input.value); });
+    els.clearDone.addEventListener("click", clearDone);
+
+    document.querySelectorAll(".filter-btn").forEach(function (b) {
+      b.addEventListener("click", function () { setFilter(b.getAttribute("data-filter")); });
+    });
+
+    els.list.addEventListener("click", function (e) {
+      var itemEl = e.target.closest(".item");
+      if (!itemEl) return;
+      var id = itemEl.getAttribute("data-id");
+      var act = e.target.closest("[data-act]");
+      if (!act) return;
+      if (act.getAttribute("data-act") === "toggle") toggleTodo(id);
+      if (act.getAttribute("data-act") === "del") deleteTodo(id);
+    });
+
+    els.list.addEventListener("keydown", function (e) {
+      if (e.key !== " " && e.key !== "Enter") return;
+      var cb = e.target.closest('.checkbox[data-act="toggle"]');
+      if (!cb) return;
+      e.preventDefault();
+      var itemEl = cb.closest(".item");
+      toggleTodo(itemEl.getAttribute("data-id"));
+    });
+
+    boot();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+</body>
+</html>
